@@ -1,6 +1,5 @@
 package io.thebrother.tusrx.response;
 
-import java.util.Collection;
 import java.util.Collections;
 
 public class Options {
