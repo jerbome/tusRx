@@ -37,6 +37,7 @@ public class TestServerRule extends ExternalResource {
         if (embedded) {
             server.shutdown();
         }
+        client = null;
         super.after();
     }
     

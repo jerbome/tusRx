@@ -6,6 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.server.HttpServer;
 import io.reactivex.netty.protocol.http.server.RequestHandler;
+
+import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.rxnetty.TusRxRequestHandler;
 
 public class TestServer {
@@ -13,7 +15,7 @@ public class TestServer {
     private HttpServer<ByteBuf, ByteBuf> server;
 
     public TestServer() {
-        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler();
+        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files"));
         server = HttpServer.newServer();
         
         CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
@@ -36,7 +38,7 @@ public class TestServer {
     }
 
     public static void main(String args[]) {
-        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler();
+        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files"));
         HttpServer<ByteBuf, ByteBuf> server = HttpServer.newServer(8080).start(requestHandler);
 
         server.awaitShutdown();

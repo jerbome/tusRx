@@ -1,9 +1,8 @@
-package io.thebrother.tusrx.options;
+package io.thebrother.tusrx.http;
 
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +11,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.netty.protocol.http.client.HttpClientRequest;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-import io.thebrother.tusrx.server.TestServerRule;
 
-public class HttpOptionsTest {
+public class HttpOptionsTest extends BaseHttpTest {
 
     private static Logger logger = LoggerFactory.getLogger(HttpOptionsTest.class);
     
-    @ClassRule public static TestServerRule serverRule = new TestServerRule(true);
-
     @Test
     public void testTusResumable() {
         HttpClientRequest<ByteBuf, ByteBuf> request = serverRule.getHttpClient().createOptions("/files");
