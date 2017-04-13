@@ -1,13 +1,16 @@
 package io.thebrother.tusrx;
 
+import java.nio.file.Path;
 import java.util.Collections;
 
 public class Options {
     
     private final String basePath;
+    private final Path rootDir;
     
-    public Options(String basePath) {
+    public Options(String basePath, Path rootDir) {
         this.basePath = basePath;
+        this.rootDir = rootDir;
     }
     
 	public String getResumable() {
@@ -29,4 +32,8 @@ public class Options {
 	public String getBasePath() {
 	    return this.basePath;
 	}
+
+    public Path getRootDir() {
+        return rootDir;
+    }
 }

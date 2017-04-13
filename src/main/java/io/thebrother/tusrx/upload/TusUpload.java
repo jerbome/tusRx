@@ -3,8 +3,9 @@ package io.thebrother.tusrx.upload;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -21,18 +22,22 @@ public class TusUpload {
 
     private final UUID uuid;
 
+    private final Path rootDir;
 
     private final UploaderPool pool;
 
-    public TusUpload(UUID uuid, UploaderPool pool) {
+    private int chunkNumber = 0;
+
+    public TusUpload(UUID uuid, UploaderPool pool, Path rootDir) {
         this.uuid = uuid;
         this.pool = pool;
+        this.rootDir = rootDir;
     }
 
     public Observable<Long> uploadChunk(TusRequest request) {
         try {
             FileChannel fChannel = FileChannel.open(
-                    Paths.get("/Users/jlefrere/perso/tusRx/tmp/", uuid.toString() + ".bin"),
+                    Paths.get("/Users/jlefrere/perso/tusRx/tmp/", uuid.toString(), "chunk-" + ++chunkNumber),
                     new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.WRITE });
 
             return request.getContent().doOnNext(bb -> logger.debug("received some ByteBuffer"))
@@ -59,7 +64,14 @@ public class TusUpload {
         }
     }
 
-    public void start() {
+    public Observable<Path> start() {
+        return Observable.fromCallable(() -> { 
+            Set<PosixFilePermission> perms =
+                    PosixFilePermissions.fromString("rwxr-x---");
+                FileAttribute<Set<PosixFilePermission>> attr =
+                    PosixFilePermissions.asFileAttribute(perms);
+                return Files.createDirectories(rootDir.resolve(uuid.toString()), attr);
+        });
     }
 
     private void cleanup(FileChannel fChannel) {

@@ -1,6 +1,10 @@
 package io.thebrother.tusrx.server;
 
+import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import io.netty.buffer.ByteBuf;
@@ -15,35 +19,44 @@ public class TestServer {
     private HttpServer<ByteBuf, ByteBuf> server;
 
     public TestServer() {
-        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files"));
-        server = HttpServer.newServer();
-        
-        CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
-        serverFuture.thenAccept(voyd -> server.awaitShutdown());
-        serverFuture.join();
+        try {
+            String tmpFileStore = System.getenv("TUS_RX_TMP_FILE_STORE");
+            Path tmpFilesStorePath = null;
+            if (tmpFileStore != null) {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-x---");
+                FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+                tmpFilesStorePath = Files.createTempDirectory("tusFileStore", attr);
+            }
+            RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files",
+                    tmpFilesStorePath != null ? tmpFilesStorePath : Paths.get("/Users/jlefrere/perso/tusRx/tmp")));
+            server = HttpServer.newServer();
+
+            CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
+            serverFuture.thenAccept(voyd -> server.awaitShutdown());
+            serverFuture.join();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-    
-    
+
     public SocketAddress getServerAddress() {
         return server.getServerAddress();
     }
 
-
     public int getServerPort() {
         return server.getServerPort();
     }
-    
+
     public void shutdown() {
         server.shutdown();
     }
 
     public static void main(String args[]) {
-        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files"));
+        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(
+                new Options("files", Paths.get("/Users/jlefrere/perso/tusRx/tmp")));
         HttpServer<ByteBuf, ByteBuf> server = HttpServer.newServer(8080).start(requestHandler);
 
         server.awaitShutdown();
     }
-    
-    
 
 }
