@@ -18,7 +18,11 @@ public class HttpPostTest extends BaseHttpTest {
 
     @Test
     public void testStatus() {
-        Iterable<HttpClientResponse<ByteBuf>> response = serverRule.getHttpClient().createPost("/files").toBlocking()
+        Iterable<HttpClientResponse<ByteBuf>> response = serverRule.getHttpClient()
+                .createPost("/files")
+                .addHeader("Tus-Resumable", "1.0.0")
+                .addHeader("Upload-Length", "100")
+                .toBlocking()
                 .toIterable();
         Iterator<HttpClientResponse<ByteBuf>> it = response.iterator();
         assertTrue(it.hasNext());
@@ -27,7 +31,10 @@ public class HttpPostTest extends BaseHttpTest {
 
     @Test
     public void testLocation() {
-        Iterable<HttpClientResponse<ByteBuf>> response = serverRule.getHttpClient().createPost("/files").toBlocking()
+        Iterable<HttpClientResponse<ByteBuf>> response = serverRule.getHttpClient().createPost("/files")
+                .addHeader("Tus-Resumable", "1.0.0")
+                .addHeader("Upload-Length", "100")
+                .toBlocking()
                 .toIterable();
         Iterator<HttpClientResponse<ByteBuf>> it = response.iterator();
         assertTrue(it.hasNext());
