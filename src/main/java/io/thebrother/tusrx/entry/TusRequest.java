@@ -1,9 +1,7 @@
 package io.thebrother.tusrx.entry;
 
 import java.nio.ByteBuffer;
-import java.util.UUID;
-
-import io.thebrother.tusrx.http.TusHeader;
+import java.util.*;
 
 import rx.Observable;
 
@@ -11,7 +9,9 @@ public interface TusRequest {
     
     Method getMethod();
     
-    Observable<TusHeader> getHeaders();
+    Map<String, String> getHeaders();
+    
+    Optional<String> getHeader(String name);
     
     Observable<ByteBuffer> getContent();
     

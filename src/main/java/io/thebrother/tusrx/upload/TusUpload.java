@@ -37,7 +37,7 @@ public class TusUpload {
     public Observable<Long> uploadChunk(TusRequest request) {
         try {
             FileChannel fChannel = FileChannel.open(
-                    Paths.get("/Users/jlefrere/perso/tusRx/tmp/", uuid.toString(), "chunk-" + ++chunkNumber),
+                    rootDir.resolve(uuid.toString()).resolve("chunk-" + ++chunkNumber),
                     new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.WRITE });
 
             return request.getContent().doOnNext(bb -> logger.debug("received some ByteBuffer"))

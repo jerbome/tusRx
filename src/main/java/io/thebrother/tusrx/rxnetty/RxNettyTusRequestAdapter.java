@@ -1,7 +1,9 @@
 package io.thebrother.tusrx.rxnetty;
 
 import java.nio.ByteBuffer;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.server.HttpServerRequest;
@@ -26,9 +28,10 @@ public class RxNettyTusRequestAdapter implements TusRequest {
     }
 
     @Override
-    public Observable<TusHeader> getHeaders() {
-        Observable<String> headerNames = Observable.from(rxNettyRequest.getHeaderNames());
-        return headerNames.zipWith(headerNames.map(rxNettyRequest::getHeader), TusHeader::new);
+    public Map<String, String> getHeaders() {
+        Set<String> headerNames = rxNettyRequest.getHeaderNames();
+        return headerNames.stream()
+                .collect(Collectors.toMap(Function.identity(), rxNettyRequest::getHeader));
     }
 
     @Override
@@ -39,6 +42,11 @@ public class RxNettyTusRequestAdapter implements TusRequest {
     @Override
     public Observable<ByteBuffer> getContent() {
         return rxNettyRequest.getContent().map(ByteBuf::nioBuffer);
+    }
+
+    @Override
+    public Optional<String> getHeader(String name) {
+        return Optional.ofNullable(rxNettyRequest.getHeader(name));
     }
     
     

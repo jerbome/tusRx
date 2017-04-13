@@ -21,7 +21,7 @@ public class Options {
 		return "1.0.0";
 	}
 	
-	public int getMaxSize() {
+	public long getMaxSize() {
 		return Integer.MAX_VALUE;
 	}
 	

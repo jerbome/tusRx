@@ -1,5 +1,7 @@
 package io.thebrother.tusrx;
 
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,28 +50,36 @@ public class TusRx {
     }
 
     private Observable<TusResponse> handlePatch(TusRequest request) {
-        return pool.getUploader(request.getUuid()).map(up -> { 
+        return pool.getUploader(request.getUuid()).map(up -> {
             Observable<Long> bytesUploaded = up.uploadChunk(request);
             return bytesUploaded
-                .reduce((a, b) -> a + b)
-                .map(l -> { 
-                    TusResponse tusResponse = new TusResponseImpl();
-                    tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
-                    return tusResponse;
-                });
+                    .reduce((a, b) -> a + b)
+                    .map(l -> {
+                        TusResponse tusResponse = new TusResponseImpl();
+                        tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
+                        return tusResponse;
+                    });
         }).orElse(Observable.just(TusResponse.NOT_FOUND));
-        
+
     }
 
     private Observable<TusResponse> handlePost(TusRequest request) {
         TusResponse response = new TusResponseImpl();
         if (isRequestValid(request)) {
-            return pool.newUploader()
-                .map(uuid -> { 
-                    response.setStatus(HttpResponseStatus.CREATED);
-                    response.setHeader("Location", "/" + options.getBasePath() + "/" + uuid.toString());
-                    return response;
-                });
+            // TODO Optional mixed with Observable is getting harder to read. Use only Observable
+            return request.getHeader("Upload-Length")
+                    .filter(v -> Long.parseLong(v) > options.getMaxSize())
+                    .map(v -> {
+                        response.setStatus(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
+                        return Observable.just(response);
+                    }).orElseGet(() -> {
+                        return pool.newUploader()
+                                .map(uuid -> {
+                                    response.setStatus(HttpResponseStatus.CREATED);
+                                    response.setHeader("Location", "/" + options.getBasePath() + "/" + uuid.toString());
+                                    return response;
+                                });
+                    });
         } else {
             response.setStatus(HttpResponseStatus.BAD_REQUEST);
             return Observable.just(response);
@@ -77,8 +87,8 @@ public class TusRx {
     }
 
     private boolean isRequestValid(TusRequest request) {
-        // TODO
-        return true;
+        return request.getHeader("Tus-Resumable").map(v -> v.equals(options.getResumable())).orElse(false) &&
+                request.getHeader("Upload-Length").map(s -> true).orElse(false);
     }
 
     private Observable<TusResponse> handleOption(TusRequest request) {
@@ -86,7 +96,7 @@ public class TusRx {
         response.setStatus(HttpResponseStatus.NO_CONTENT);
         response.setHeader("Tus-Resumable", options.getResumable());
         response.setHeader("Tus-Version", options.getVersion());
-        response.setHeader("Tus-Max-Size", Integer.toString(options.getMaxSize()));
+        response.setHeader("Tus-Max-Size", Long.toString(options.getMaxSize()));
         if (options.getExtensions() != null) {
             response.setHeader("Tus-Extension", String.join(",", options.getExtensions()));
         }
