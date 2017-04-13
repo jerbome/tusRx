@@ -1,5 +1,6 @@
 test:
   override:
+    - export TERM="dumb"
     - ./gradlew check jacocoTestReport
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
