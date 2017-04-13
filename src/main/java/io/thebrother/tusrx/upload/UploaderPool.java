@@ -19,7 +19,7 @@ public class UploaderPool {
     public Observable<UUID> newUploader() {
         UUID uuid = UUID.randomUUID();
         
-        TusUpload upload = new TusUpload(uuid, this, rootDir);
+        TusUpload upload = new TusUpload(uuid, rootDir, this);
         Observable<UUID> start = upload.start().ignoreElements().cast(UUID.class);
         uploaders.put(uuid, upload);
         return start.concatWith(Observable.just(uuid));

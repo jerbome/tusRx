@@ -19,6 +19,17 @@ public class TestServer {
     private HttpServer<ByteBuf, ByteBuf> server;
 
     public TestServer() {
+        Options options = getOptions();
+        RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(
+                options);
+        server = HttpServer.newServer();
+
+        CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
+        serverFuture.thenAccept(voyd -> server.awaitShutdown());
+        serverFuture.join();
+    }
+
+    private static Options getOptions() {
         try {
             String tmpFileStore = System.getenv("TUS_RX_TMP_FILE_STORE");
             Path tmpFilesStorePath = null;
@@ -27,13 +38,11 @@ public class TestServer {
                 FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
                 tmpFilesStorePath = Files.createTempDirectory("tusFileStore", attr);
             }
-            RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(new Options("files",
-                    tmpFilesStorePath != null ? tmpFilesStorePath : Paths.get("/Users/jlefrere/perso/tusRx/tmp")));
-            server = HttpServer.newServer();
-
-            CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
-            serverFuture.thenAccept(voyd -> server.awaitShutdown());
-            serverFuture.join();
+            Options options = new Options("files",
+                    tmpFilesStorePath != null ? tmpFilesStorePath
+                            : Paths.get("/Users/jlefrere/perso/tusRx/tmp"),
+                    "http://localhost");
+            return options;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -53,7 +62,7 @@ public class TestServer {
 
     public static void main(String args[]) {
         RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(
-                new Options("files", Paths.get("/Users/jlefrere/perso/tusRx/tmp")));
+                getOptions());
         HttpServer<ByteBuf, ByteBuf> server = HttpServer.newServer(8080).start(requestHandler);
 
         server.awaitShutdown();

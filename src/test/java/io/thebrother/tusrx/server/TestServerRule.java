@@ -15,11 +15,7 @@ public class TestServerRule extends ExternalResource {
     private final boolean embedded;
     
     public TestServerRule() {
-        this(true);
-    }
-    
-    public TestServerRule(boolean embedded) {
-        this.embedded = embedded;
+        this.embedded = !Boolean.getBoolean("io.thebrother.tusrx.test.notEmbedded");
     }
     
     private HttpClient<ByteBuf, ByteBuf> client;

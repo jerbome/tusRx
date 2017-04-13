@@ -7,10 +7,12 @@ public class Options {
     
     private final String basePath;
     private final Path rootDir;
+    private final String hostUrl;
     
-    public Options(String basePath, Path rootDir) {
+    public Options(String basePath, Path rootDir, String hostUrl) {
         this.basePath = basePath;
         this.rootDir = rootDir;
+        this.hostUrl = hostUrl;
     }
     
 	public String getResumable() {
@@ -34,6 +36,10 @@ public class Options {
 	}
 
     public Path getRootDir() {
-        return rootDir;
+        return this.rootDir;
+    }
+    
+    public String getHostUrl() {
+        return this.hostUrl;
     }
 }

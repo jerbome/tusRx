@@ -76,7 +76,7 @@ public class TusRx {
                         return pool.newUploader()
                                 .map(uuid -> {
                                     response.setStatus(HttpResponseStatus.CREATED);
-                                    response.setHeader("Location", "/" + options.getBasePath() + "/" + uuid.toString());
+                                    response.setHeader("Location", options.getHostUrl() + "/" + options.getBasePath() + "/" + uuid.toString());
                                     return response;
                                 });
                     });
