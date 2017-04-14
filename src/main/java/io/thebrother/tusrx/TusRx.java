@@ -1,7 +1,5 @@
 package io.thebrother.tusrx;
 
-import java.util.Objects;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +21,12 @@ public class TusRx {
     private final Options options;
 
     public TusRx(Options options) {
+        this(options, new UploaderPool(options.getRootDir()));
+    }
+    
+    public TusRx(Options options, UploaderPool pool) {
         this.options = options;
-        this.pool = new UploaderPool(options.getRootDir());
+        this.pool = pool;
     }
 
     public Observable<TusResponse> handle(TusRequest request) {
@@ -76,6 +78,7 @@ public class TusRx {
                         return pool.newUploader()
                                 .map(uuid -> {
                                     response.setStatus(HttpResponseStatus.CREATED);
+                                    response.setHeader("Tus-Resumable", options.getResumable());
                                     response.setHeader("Location", options.getHostUrl() + "/" + options.getBasePath() + "/" + uuid.toString());
                                     return response;
                                 });
