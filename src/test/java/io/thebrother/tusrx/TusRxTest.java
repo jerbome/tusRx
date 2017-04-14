@@ -54,7 +54,7 @@ public abstract class TusRxTest {
 
         public void doesNotHaveHeader(String headerName) {
             assertThat(response.getHeaders().stream().noneMatch(th -> th.getName().equals(headerName)))
-                    .isTrue();
+                    .as("Checking absence of header[%s] on the response", headerName).isTrue();
 
         }
     }
