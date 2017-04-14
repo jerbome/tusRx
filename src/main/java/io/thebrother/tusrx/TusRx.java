@@ -15,6 +15,8 @@ import rx.Observable;
 public class TusRx {
 
     private static final Logger logger = LoggerFactory.getLogger(TusRx.class);
+    
+    private static final Observable<TusResponse> NOT_FOUND = Observable.just(TusResponse.NOT_FOUND);
 
     private final UploaderPool pool;
 
@@ -48,7 +50,7 @@ public class TusRx {
             break;
 
         }
-        return null;
+        return NOT_FOUND;
     }
 
     private Observable<TusResponse> handlePatch(TusRequest request) {
