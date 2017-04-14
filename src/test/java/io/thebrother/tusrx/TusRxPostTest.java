@@ -6,14 +6,12 @@ import static org.mockito.Mockito.when;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.assertj.core.internal.Failures;
 import org.junit.Before;
 import org.junit.Test;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import io.thebrother.tusrx.entry.TusRequest.Method;
-import io.thebrother.tusrx.http.TusHeader;
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
@@ -48,10 +46,8 @@ public class TusRxPostTest extends TusRxTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> {
-            t.getHeaders().stream().filter(th -> th.getName().equals("Tus-Resumable")).findFirst()
-                    .map(TusHeader::getValue)
-                    .map(value -> assertThat(value).isEqualTo(tusResumable))
-                    .orElseThrow(() -> Failures.instance().failure("Missing Tus-Resumable header in the response"));
+            ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(t);
+            assertThat(responseAssert).hasHeader("Tus-Resumable", tusResumable);
         });
     }
     
@@ -66,10 +62,8 @@ public class TusRxPostTest extends TusRxTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> {
-            t.getHeaders().stream().filter(th -> th.getName().equals("Location")).findFirst()
-                    .map(TusHeader::getValue)
-                    .map(value -> assertThat(value).endsWith(uuid.toString()))
-                    .orElseThrow(() -> Failures.instance().failure("Missing Tus-Resumable header in the response"));
+            ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(t);
+            assertThat(responseAssert).hasHeaderEndingWith("Location", uuid.toString());
         });
     }
     

@@ -44,6 +44,13 @@ public abstract class TusRxTest {
                     .map(value -> assertThat(value).isEqualTo(expectedHeaderValue))
                     .orElseThrow(() -> Failures.instance().failure(headerName + " header not present in response"));
         }
+
+        public void hasHeaderEndingWith(String headerName, String expectedHeaderValue) {
+            response.getHeaders().stream().filter(th -> th.getName().equals(headerName)).findFirst()
+                    .map(TusHeader::getValue)
+                    .map(value -> assertThat(value).endsWith(expectedHeaderValue))
+                    .orElseThrow(() -> Failures.instance().failure(headerName + " header not present in response"));
+        }
     }
 
 }

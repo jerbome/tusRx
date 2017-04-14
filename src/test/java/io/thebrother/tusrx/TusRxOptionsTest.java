@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 
-import org.assertj.core.internal.Failures;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,10 +52,8 @@ public class TusRxOptionsTest extends TusRxTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> {
-            t.getHeaders().stream().filter(h -> h.getName().equals("Tus-Resumable")).findFirst()
-                .map(h -> h.getValue())
-                .map(value -> assertThat(value).isEqualTo(tusResumable))
-                .orElseThrow(() -> Failures.instance().failure("No Tus-Resumable header set on response"));
+            ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(t);
+            assertThat(responseAssert).hasHeader("Tus-Resumable", tusResumable);
         });
     }
     
@@ -69,10 +66,8 @@ public class TusRxOptionsTest extends TusRxTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> {
-            t.getHeaders().stream().filter(h -> h.getName().equals("Tus-Version")).findFirst()
-                .map(h -> h.getValue())
-                .map(value -> assertThat(value).isEqualTo(tusResumable))
-                .orElseThrow(() -> Failures.instance().failure("No Tus-Version header set on response"));
+            ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(t);
+            assertThat(responseAssert).hasHeader("Tus-Version", tusResumable);
         });
     }
     
