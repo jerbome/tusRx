@@ -104,6 +104,20 @@ public class TusRxPostTest extends TusRxTest {
     }
     
     @Test
+    public void testUploadLengthNotSetResponds400() {
+     // arrange
+        when(request.getHeader("Tus-Resumable")).thenReturn(Optional.of(tusResumable));
+
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+
+        // assert
+        response.single().toBlocking().subscribe(t -> { 
+            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.BAD_REQUEST);
+        });
+    }
+    
+    @Test
     public void testTooLargeUploadResponds419() {
      // arrange
         when(request.getHeader("Tus-Resumable")).thenReturn(Optional.of(tusResumable));
