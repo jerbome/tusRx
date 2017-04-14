@@ -3,8 +3,7 @@ package io.thebrother.tusrx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +55,7 @@ public class TusRxOptionsTest extends TusRxTest {
             assertThat(responseAssert).hasHeader("Tus-Resumable", tusResumable);
         });
     }
-    
+
     @Test
     public void testOptionsSetTusVersionHeader() {
         // arrange
@@ -70,10 +69,10 @@ public class TusRxOptionsTest extends TusRxTest {
             assertThat(responseAssert).hasHeader("Tus-Version", tusResumable);
         });
     }
-    
+
     @Test
     public void testOptionsSetTusExtensionHeader() {
-     // arrange
+        // arrange
 
         // act
         Observable<TusResponse> response = tusRx.handle(request);
@@ -82,6 +81,36 @@ public class TusRxOptionsTest extends TusRxTest {
         response.single().toBlocking().subscribe(t -> {
             ResponseHeaderAssert reponseAssert = new ResponseHeaderAssert(t);
             assertThat(reponseAssert).hasHeader("Tus-Extension", String.join(",", extensions));
+        });
+    }
+    
+    @Test
+    public void testOptionsDoesNotSetTusExtensionHeaderWhenExtensionsIsNull() {
+     // arrange
+        when(options.getExtensions()).thenReturn(null);
+        
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+
+        // assert
+        response.single().toBlocking().subscribe(t -> {
+            ResponseHeaderAssert reponseAssert = new ResponseHeaderAssert(t);
+            assertThat(reponseAssert).doesNotHaveHeader("Tus-Extension");
+        });
+    }
+    
+    @Test
+    public void testOptionsDoesNotSetTusExtensionHeaderWhenExtensionsIsEmpty() {
+     // arrange
+        when(options.getExtensions()).thenReturn(Collections.emptyList());
+        
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+
+        // assert
+        response.single().toBlocking().subscribe(t -> {
+            ResponseHeaderAssert reponseAssert = new ResponseHeaderAssert(t);
+            assertThat(reponseAssert).doesNotHaveHeader("Tus-Extension");
         });
     }
 }

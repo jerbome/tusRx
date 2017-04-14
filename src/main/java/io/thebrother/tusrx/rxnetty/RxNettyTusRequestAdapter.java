@@ -9,7 +9,6 @@ import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.server.HttpServerRequest;
 
 import io.thebrother.tusrx.entry.TusRequest;
-import io.thebrother.tusrx.http.TusHeader;
 
 import rx.Observable;
 

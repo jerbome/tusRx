@@ -1,6 +1,7 @@
 package io.thebrother.tusrx;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 
 public class Options {
@@ -27,7 +28,7 @@ public class Options {
 		return Integer.MAX_VALUE;
 	}
 	
-	public Iterable<String> getExtensions() {
+	public Collection<String> getExtensions() {
 		return Collections.singleton("creation");
 	}
 	

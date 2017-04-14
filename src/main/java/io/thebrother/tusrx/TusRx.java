@@ -100,7 +100,7 @@ public class TusRx {
         response.setHeader("Tus-Resumable", options.getResumable());
         response.setHeader("Tus-Version", options.getVersion());
         response.setHeader("Tus-Max-Size", Long.toString(options.getMaxSize()));
-        if (options.getExtensions() != null) {
+        if (options.getExtensions() != null && options.getExtensions().size() > 0) {
             response.setHeader("Tus-Extension", String.join(",", options.getExtensions()));
         }
         return Observable.just(response);
