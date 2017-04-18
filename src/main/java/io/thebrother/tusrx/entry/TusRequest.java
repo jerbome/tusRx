@@ -9,8 +9,6 @@ public interface TusRequest {
     
     Method getMethod();
     
-    Map<String, String> getHeaders();
-    
     Optional<String> getHeader(String name);
     
     Observable<ByteBuffer> getContent();

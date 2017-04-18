@@ -1,9 +1,8 @@
 package io.thebrother.tusrx.rxnetty;
 
 import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.UUID;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.server.HttpServerRequest;
@@ -24,13 +23,6 @@ public class RxNettyTusRequestAdapter implements TusRequest {
     @Override
     public Method getMethod() {
         return Method.valueOf(rxNettyRequest.getHttpMethod().name());
-    }
-
-    @Override
-    public Map<String, String> getHeaders() {
-        Set<String> headerNames = rxNettyRequest.getHeaderNames();
-        return headerNames.stream()
-                .collect(Collectors.toMap(Function.identity(), rxNettyRequest::getHeader));
     }
 
     @Override
