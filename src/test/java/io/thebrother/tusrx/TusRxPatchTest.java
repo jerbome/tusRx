@@ -85,4 +85,55 @@ public class TusRxPatchTest extends TusRxTest {
             responseAssert.hasHeader("Tus-Resumable", tusResumable);
         }, x -> logger.info("", x));
     }
+    
+    @Test
+    public void testWrongOffsetResponds409() {
+     // arrange
+        when(request.getUuid()).thenReturn(uuid);
+        when(request.getHeader("Upload-Offset")).thenReturn(Optional.of("10"));
+        when(upload.getOffset()).thenReturn(new AtomicLong(50L));
+        when(upload.uploadChunk(request))
+                .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
+
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+
+        // assert
+        response.toBlocking().subscribe(tr -> {
+            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.CONFLICT);
+        }, x -> logger.info("", x));
+    }
+    
+    @Test
+    public void testSuccessfulChunckUploadIncrementsOffset() {
+     // arrange
+        when(request.getUuid()).thenReturn(uuid);
+        when(request.getHeader("Upload-Offset")).thenReturn(Optional.of("0"));
+        AtomicLong offset = new AtomicLong(0L);
+        when(upload.getOffset()).thenReturn(offset);
+        when(upload.uploadChunk(request))
+                .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
+
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+        response.toBlocking().subscribe();
+
+        // assert
+        assertThat(offset.get()).isEqualTo(6L);
+    }
+    
+    @Test
+    public void testNoUploadFoundResponds404() {
+     // arrange
+        when(request.getUuid()).thenReturn(UUID.randomUUID());
+        when(request.getHeader("Upload-Offset")).thenReturn(Optional.of("0"));
+
+        // act
+        Observable<TusResponse> response = tusRx.handle(request);
+
+        // assert
+        response.toBlocking().subscribe(tr -> { 
+            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.NOT_FOUND);
+        });
+    }
 }
