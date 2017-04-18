@@ -8,6 +8,7 @@ import java.nio.file.attribute.*;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,16 +25,20 @@ public class TusUpload {
     private final UUID uuid;
     private final Path rootDir;
     private final UploaderPool pool;
+    
+    private final long uploadLength;
 
     private int chunkNumber = 0;
+    private AtomicLong offset = new AtomicLong(0L);
 
     private final Observable<Long> timer = Observable.timer(3, TimeUnit.MINUTES);
     private Subscription timerSubscription;
 
-    public TusUpload(UUID uuid, Path rootDir, UploaderPool pool) {
+    public TusUpload(UUID uuid, Path rootDir, UploaderPool pool, long uploadLength) {
         this.uuid = uuid;
         this.rootDir = rootDir;
         this.pool = pool;
+        this.uploadLength = uploadLength;
     }
 
     public Observable<Long> uploadChunk(TusRequest request) {
@@ -46,7 +51,6 @@ public class TusUpload {
             return request.getContent().doOnNext(bb -> logger.debug("received some ByteBuffer"))
                     .buffer(100, TimeUnit.MILLISECONDS)
                     .filter(bb -> bb.size() > 0)
-                    // .timeout(300, TimeUnit.MILLISECONDS)
                     .flatMap(bb -> Observable.fromCallable(() -> {
                         logger.debug("writing " + bb.size() + " buffers  to file");
                         return fChannel.write(bb.toArray(new ByteBuffer[bb.size()]));
@@ -89,6 +93,14 @@ public class TusUpload {
             logger.debug("No actions on TusUpload " + uuid + ". Discarding");
             pool.remove(uuid);
         });
+    }
+
+    public AtomicLong getOffset() {
+        return offset;
+    }
+
+    public long getUploadLength() {
+        return uploadLength;
     }
     
 }

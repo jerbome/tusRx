@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -30,7 +31,7 @@ public class TusRxPostTest extends TusRxTest {
         when(options.getResumable()).thenReturn(tusResumable );
         when(options.getMaxSize()).thenReturn(maxSize);
         
-        when(pool.newUploader()).thenReturn(Observable.just(uuid));
+        when(pool.newUploader(ArgumentMatchers.anyLong())).thenReturn(Observable.just(uuid));
     }
 
     

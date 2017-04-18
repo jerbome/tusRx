@@ -30,6 +30,48 @@ public interface TusResponse {
         }
         
     };
+    TusResponse CONFLICT = new TusResponse() {
+
+        @Override
+        public void setStatus(HttpResponseStatus noContent) {
+        }
+
+        @Override
+        public HttpResponseStatus getStatus() {
+            return HttpResponseStatus.CONFLICT;
+        }
+
+        @Override
+        public Collection<TusHeader> getHeaders() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void setHeader(String header, String value) {
+        }
+        
+    };
+    TusResponse BAD_REQUEST = new TusResponse() {
+
+        @Override
+        public void setStatus(HttpResponseStatus noContent) {
+        }
+
+        @Override
+        public HttpResponseStatus getStatus() {
+            return HttpResponseStatus.BAD_REQUEST;
+        }
+
+        @Override
+        public Collection<TusHeader> getHeaders() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void setHeader(String header, String value) {
+        }
+        
+    };
 
     void setStatus(HttpResponseStatus noContent);
 

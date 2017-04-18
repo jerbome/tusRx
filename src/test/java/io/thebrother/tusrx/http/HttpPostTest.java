@@ -49,20 +49,23 @@ public class HttpPostTest extends BaseHttpTest {
                 .map(r -> r.getHeader("Location"))
                 .filter(Objects::nonNull)
                 .flatMap(loc -> serverRule.getHttpClient().createPatch(loc)
+                        .setHeader("Upload-Offset", 0L)
                         .writeStringContent(
                                 Observable.just("hello", " ", "world", "\n")
                                         .zipWith(Observable.interval(100, TimeUnit.MILLISECONDS).startWith(0L),
                                                 (str, nada) -> str),
-                                // .delay(25, TimeUnit.MILLISECONDS)
-                                // .repeat(1000),
                                 str -> true)
-                        .concatWith(serverRule.getHttpClient().createPatch(loc).writeStringContent(
-                                Observable.just("goodbye", " ", "hell", "\n")
-                                        .zipWith(Observable.interval(100, TimeUnit.MILLISECONDS).startWith(0L),
-                                                (str, nada) -> str),
-                                // .delay(25, TimeUnit.MILLISECONDS)
-                                // .repeat(1000),
-                                str -> true)))
+                        .map(resp -> resp.getHeader("Upload-Offset"))
+                        .concatMap(offset -> {
+                            return serverRule.getHttpClient().createPatch(loc)
+                                    .setHeader("Upload-Offset", offset)
+                                    .writeStringContent(
+                                            Observable.just("goodbye", " ", "hell", "\n")
+                                                    .zipWith(Observable.interval(100, TimeUnit.MILLISECONDS)
+                                                            .startWith(0L),
+                                                            (str, nada) -> str),
+                                            str -> true);
+                        }))
                 .toBlocking()
                 .subscribe();
     }

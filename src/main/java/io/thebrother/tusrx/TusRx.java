@@ -1,5 +1,7 @@
 package io.thebrother.tusrx;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,7 @@ import rx.Observable;
 public class TusRx {
 
     private static final Logger logger = LoggerFactory.getLogger(TusRx.class);
-    
+
     private static final Observable<TusResponse> NOT_FOUND = Observable.just(TusResponse.NOT_FOUND);
 
     private final UploaderPool pool;
@@ -25,7 +27,7 @@ public class TusRx {
     public TusRx(Options options) {
         this(options, new UploaderPool(options.getRootDir()));
     }
-    
+
     public TusRx(Options options, UploaderPool pool) {
         this.options = options;
         this.pool = pool;
@@ -39,7 +41,7 @@ public class TusRx {
         case GET:
             break;
         case HEAD:
-            break;
+            return handleHead(request);
         case OPTIONS:
             return handleOption(request);
         case PATCH:
@@ -53,37 +55,65 @@ public class TusRx {
         return NOT_FOUND;
     }
 
+    private Observable<TusResponse> handleHead(TusRequest request) {
+        return pool.getUploader(request.getUuid()).map(up -> { 
+            TusResponse response = new TusResponseImpl();
+            response.setStatus(HttpResponseStatus.NO_CONTENT);
+            response.setHeader("Tus-Resumable", options.getResumable());
+            response.setHeader("Upload-Offset", Long.toString(up.getOffset().get()));
+            response.setHeader("Upload-Length", Long.toString(up.getUploadLength()));
+            return Observable.just(response);
+        }).orElse(NOT_FOUND);
+    }
+
     private Observable<TusResponse> handlePatch(TusRequest request) {
         return pool.getUploader(request.getUuid()).map(up -> {
-            Observable<Long> bytesUploaded = up.uploadChunk(request);
-            return bytesUploaded
-                    .reduce((a, b) -> a + b)
-                    .map(l -> {
-                        TusResponse tusResponse = new TusResponseImpl();
-                        tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
-                        return tusResponse;
-                    });
+            AtomicLong offset = up.getOffset();
+            return request.getHeader("Upload-Offset")
+                    .map(Long::parseLong)
+                    .map(reqOffset -> {
+                        if (reqOffset == offset.get()) {
+                            Observable<Long> bytesUploaded = up.uploadChunk(request);
+                            return bytesUploaded
+                                    .doOnError(x -> logger.error("something went awry when copying PATCH content", x))
+                                    .onErrorResumeNext(Observable.empty())
+                                    .reduce((a, b) -> a + b)
+                                    .map(l -> {
+                                        TusResponse tusResponse = new TusResponseImpl();
+                                        tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
+                                        tusResponse.setHeader("Tus-Resumable", options.getResumable());
+                                        tusResponse.setHeader("Upload-Offset", Long.toString(offset.addAndGet(l)));
+                                        return tusResponse;
+                                    })
+                                    .doAfterTerminate(() -> {});
+                        } else {
+                            return Observable.just(TusResponse.CONFLICT);
+                        }
+                    }).orElse(Observable.just(TusResponse.BAD_REQUEST));
         }).orElse(Observable.just(TusResponse.NOT_FOUND));
 
     }
 
     private Observable<TusResponse> handlePost(TusRequest request) {
         TusResponse response = new TusResponseImpl();
-        if (isRequestValid(request)) {
-            // TODO Optional mixed with Observable is getting harder to read. Use only Observable
+        if (isPostRequestValid(request)) {
+            // TODO Optional mixed with Observable is getting harder to read.
+            // Use only Observable?
             return request.getHeader("Upload-Length")
-                    .filter(v -> Long.parseLong(v) > options.getMaxSize())
+                    .map(Long::parseLong)
+                    .filter(v -> v <= options.getMaxSize())
                     .map(v -> {
-                        response.setStatus(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
-                        return Observable.just(response);
-                    }).orElseGet(() -> {
-                        return pool.newUploader()
+                        return pool.newUploader(v)
                                 .map(uuid -> {
                                     response.setStatus(HttpResponseStatus.CREATED);
                                     response.setHeader("Tus-Resumable", options.getResumable());
-                                    response.setHeader("Location", options.getHostUrl() + "/" + options.getBasePath() + "/" + uuid.toString());
+                                    response.setHeader("Location",
+                                            options.getHostUrl() + "/" + options.getBasePath() + "/" + uuid.toString());
                                     return response;
                                 });
+                    }).orElseGet(() -> {
+                        response.setStatus(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
+                        return Observable.just(response);
                     });
         } else {
             response.setStatus(HttpResponseStatus.BAD_REQUEST);
@@ -91,7 +121,7 @@ public class TusRx {
         }
     }
 
-    private boolean isRequestValid(TusRequest request) {
+    private boolean isPostRequestValid(TusRequest request) {
         return request.getHeader("Tus-Resumable").map(v -> v.equals(options.getResumable())).orElse(false) &&
                 request.getHeader("Upload-Length").map(s -> true).orElse(false);
     }
