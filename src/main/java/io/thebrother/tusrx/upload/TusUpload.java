@@ -8,6 +8,7 @@ import java.nio.file.attribute.*;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -25,11 +26,11 @@ public class TusUpload {
     private final UUID uuid;
     private final Path rootDir;
     private final UploaderPool pool;
-    
+
     private final long uploadLength;
 
-    private int chunkNumber = 0;
-    private AtomicLong offset = new AtomicLong(0L);
+    private final AtomicLong offset = new AtomicLong(0L);
+    private final AtomicBoolean uploadInProgress = new AtomicBoolean(false);
 
     private final Observable<Long> timer = Observable.timer(3, TimeUnit.MINUTES);
     private Subscription timerSubscription;
@@ -42,29 +43,35 @@ public class TusUpload {
     }
 
     public Observable<Long> uploadChunk(TusRequest request) {
-        refreshTimer();
-        try {
-            FileChannel fChannel = FileChannel.open(
-                    rootDir.resolve(uuid.toString()).resolve("chunk-" + ++chunkNumber),
-                    new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.WRITE });
+        if (uploadInProgress.compareAndSet(false, true)) {
+            refreshTimer();
+            try {
+                FileChannel fChannel = FileChannel.open(
+                        rootDir.resolve(uuid.toString()).resolve("chunk-" + offset.get()),
+                        new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.WRITE });
 
-            return request.getContent().doOnNext(bb -> logger.debug("received some ByteBuffer"))
-                    .buffer(100, TimeUnit.MILLISECONDS)
-                    .filter(bb -> bb.size() > 0)
-                    .flatMap(bb -> Observable.fromCallable(() -> {
-                        logger.debug("writing " + bb.size() + " buffers  to file");
-                        return fChannel.write(bb.toArray(new ByteBuffer[bb.size()]));
-                    }).subscribeOn(Schedulers.io()))
-                    .doOnError(x -> {
-                        logger.error("something went wrong, cleaning up", x);
-                        cleanup(fChannel);
-                    })
-                    .doOnCompleted(() -> {
-                        logger.debug("cool bro, it is done, cleaning up");
-                        cleanup(fChannel);
-                    });
-        } catch (IOException e1) {
-            return Observable.error(e1);
+                return request.getContent().doOnNext(bb -> logger.debug("received some ByteBuffer"))
+                        .buffer(100, TimeUnit.MILLISECONDS)
+                        .filter(bb -> bb.size() > 0)
+                        .flatMap(bb -> Observable.fromCallable(() -> {
+                            logger.debug("writing " + bb.size() + " buffers  to file");
+                            return fChannel.write(bb.toArray(new ByteBuffer[bb.size()]));
+                        }).observeOn(Schedulers.io()))
+                        .doOnError(x -> {
+                            logger.error("something went wrong, cleaning up", x);
+                            uploadInProgress.set(false);
+                            cleanup(fChannel);
+                        })
+                        .doOnCompleted(() -> {
+                            logger.debug("cool bro, it is done, cleaning up");
+                            uploadInProgress.set(false);
+                            cleanup(fChannel);
+                        });
+            } catch (IOException e1) {
+                return Observable.error(e1);
+            }
+        } else {
+            return Observable.error(new ChunkAlreadyUploadingException());
         }
     }
 
@@ -102,5 +109,5 @@ public class TusUpload {
     public long getUploadLength() {
         return uploadLength;
     }
-    
+
 }

@@ -6,7 +6,6 @@ import java.net.SocketAddress;
 import org.junit.rules.ExternalResource;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.logging.LogLevel;
 import io.reactivex.netty.protocol.http.client.HttpClient;
 
 public class TestServerRule extends ExternalResource {
@@ -48,7 +47,7 @@ public class TestServerRule extends ExternalResource {
     public HttpClient<ByteBuf, ByteBuf> getHttpClient () {
         if (client == null) {
             HttpClient<ByteBuf, ByteBuf> _client = embedded ? HttpClient.newClient(getServerAddress()) :  HttpClient.newClient(new InetSocketAddress("localhost", 8080));
-            client = _client.enableWireLogging("client", LogLevel.ERROR);
+            client = _client;
         }
         return client;
     }

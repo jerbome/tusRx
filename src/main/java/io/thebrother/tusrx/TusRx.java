@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.thebrother.tusrx.entry.TusRequest;
 import io.thebrother.tusrx.response.TusResponse;
 import io.thebrother.tusrx.response.impl.TusResponseImpl;
+import io.thebrother.tusrx.upload.ChunkAlreadyUploadingException;
 import io.thebrother.tusrx.upload.UploaderPool;
 
 import rx.Observable;
@@ -76,8 +77,14 @@ public class TusRx {
                             Observable<Long> bytesUploaded = up.uploadChunk(request);
                             return bytesUploaded
                                     .doOnError(x -> logger.error("something went awry when copying PATCH content", x))
-                                    .onErrorResumeNext(Observable.empty())
-                                    .reduce((a, b) -> a + b)
+                                    .onErrorResumeNext(x -> {
+                                        if (x instanceof ChunkAlreadyUploadingException) {
+                                            return Observable.error(x);
+                                        } else {
+                                            return Observable.empty();
+                                        }
+                                    })
+                                    .reduce(0L, (a, b) -> a + b)
                                     .map(l -> {
                                         TusResponse tusResponse = new TusResponseImpl();
                                         tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
@@ -85,6 +92,7 @@ public class TusRx {
                                         tusResponse.setHeader("Upload-Offset", Long.toString(offset.addAndGet(l)));
                                         return tusResponse;
                                     })
+                                    .onErrorResumeNext(x-> Observable.just(TusResponse.BAD_REQUEST))
                                     .doAfterTerminate(() -> {});
                         } else {
                             return Observable.just(TusResponse.CONFLICT);
