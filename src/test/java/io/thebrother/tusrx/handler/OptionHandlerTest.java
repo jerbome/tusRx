@@ -1,4 +1,4 @@
-package io.thebrother.tusrx;
+package io.thebrother.tusrx.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -11,11 +11,12 @@ import org.junit.Test;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import io.thebrother.tusrx.entry.TusRequest.Method;
+import io.thebrother.tusrx.handler.OptionHandler;
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
 
-public class TusRxOptionsTest extends TusRxTest {
+public class OptionHandlerTest extends RequestHandlerTest {
 
     private final String tusResumable = "1.0.0";
     private final List<String> extensions = Arrays.asList("extension1", "extension2");
@@ -27,6 +28,7 @@ public class TusRxOptionsTest extends TusRxTest {
         when(options.getExtensions()).thenReturn(extensions);
         when(options.getResumable()).thenReturn(tusResumable);
         when(options.getVersion()).thenReturn(tusResumable);
+        handler = new OptionHandler(options, request);
     }
 
     @Test
@@ -34,7 +36,7 @@ public class TusRxOptionsTest extends TusRxTest {
         // arrange
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -47,7 +49,7 @@ public class TusRxOptionsTest extends TusRxTest {
         // arrange
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -61,7 +63,7 @@ public class TusRxOptionsTest extends TusRxTest {
         // arrange
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -75,7 +77,7 @@ public class TusRxOptionsTest extends TusRxTest {
         // arrange
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -90,7 +92,7 @@ public class TusRxOptionsTest extends TusRxTest {
         when(options.getExtensions()).thenReturn(null);
         
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -105,7 +107,7 @@ public class TusRxOptionsTest extends TusRxTest {
         when(options.getExtensions()).thenReturn(Collections.emptyList());
         
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {

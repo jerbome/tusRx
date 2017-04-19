@@ -1,4 +1,4 @@
-package io.thebrother.tusrx;
+package io.thebrother.tusrx.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,14 +8,16 @@ import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.entry.TusRequest;
+import io.thebrother.tusrx.handler.RequestHandler;
 import io.thebrother.tusrx.http.TusHeader;
 import io.thebrother.tusrx.response.TusResponse;
 import io.thebrother.tusrx.upload.UploaderPool;
 
-public abstract class TusRxTest {
+public abstract class RequestHandlerTest {
 
-    protected TusRx tusRx;
+    protected RequestHandler handler;
 
     @Mock
     protected Options options;
@@ -27,8 +29,6 @@ public abstract class TusRxTest {
     @Before
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-
-        tusRx = new TusRx(options, pool);
     }
 
     public static class ResponseHeaderAssert implements AssertDelegateTarget {

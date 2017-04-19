@@ -16,13 +16,11 @@ import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import rx.Observable;
 
 public class EndToEndTest extends BaseHttpTest {
-    
+
     @Test
     public void testTwoPartsUpload() {
-        serverRule.getHttpClient().createPost("/files")
-                .addHeader("Tus-Resumable", "1.0.0")
-                .addHeader("Upload-Length", 100L)
-                .map(r -> r.getHeader("Location"))
+        post(100L)
+                .map(this::getLocation)
                 .filter(Objects::nonNull)
                 .flatMap(loc -> serverRule.getHttpClient().createPatch(loc)
                         .setHeader("Upload-Offset", 0L)
@@ -48,31 +46,52 @@ public class EndToEndTest extends BaseHttpTest {
 
     @Test
     public void testConcurrentPatch() throws InterruptedException {
-        HttpClientRequest<ByteBuf, ByteBuf> post = serverRule.getHttpClient().createPost("/files")
-                .addHeader("Tus-Resumable", "1.0.0")
-                .addHeader("Upload-Length", 100L);
-        Observable<byte[]> slowContent = Observable.just("hello ".getBytes()).repeat().zipWith(Observable.interval(50, TimeUnit.MILLISECONDS).startWith(0L), (data, nop)  -> data).take(10);
-        Observable<byte[]> fastContent = Observable.just("goodbye ".getBytes()).repeat().zipWith(Observable.interval(10, TimeUnit.MILLISECONDS).startWith(0L), (data, nop)  -> data).take(10);
+        HttpClientRequest<ByteBuf, ByteBuf> post = post(100L);
 
-        Iterator<HttpClientResponse<ByteBuf>> iterator = post.map(r -> r.getHeader("Location"))
+        Observable<byte[]> slowContent = Observable.just("hello ".getBytes()).repeat()
+                .zipWith(Observable.interval(50, TimeUnit.MILLISECONDS).startWith(0L), (data, nop) -> data).take(10);
+        Observable<byte[]> fastContent = Observable.just("goodbye ".getBytes()).repeat()
+                .zipWith(Observable.interval(10, TimeUnit.MILLISECONDS).startWith(0L), (data, nop) -> data).take(10);
+
+        Iterator<HttpClientResponse<ByteBuf>> iterator = post.map(this::getLocation)
                 .flatMap(location -> Observable.merge(
-                        patch(location, slowContent),
-                        patch(location, fastContent).delay(120, TimeUnit.MILLISECONDS)))
+                        patch(location, 0 , slowContent),
+                        patch(location, 0, fastContent).delay(120, TimeUnit.MILLISECONDS)))
                 .toBlocking().getIterator();
-        
+
         // the first response should be the failure
         assertThat(iterator.next()).isNotNull()
-            .extracting(HttpClientResponse::getStatus).containsExactly(HttpResponseStatus.BAD_REQUEST);
-        
+                .extracting(HttpClientResponse::getStatus).containsExactly(HttpResponseStatus.BAD_REQUEST);
+
         // the second one should be sucessfull
         assertThat(iterator.next()).isNotNull()
-            .extracting(HttpClientResponse::getStatus).containsExactly(HttpResponseStatus.NO_CONTENT);
+                .extracting(HttpClientResponse::getStatus).containsExactly(HttpResponseStatus.NO_CONTENT);
+    }
+
+    // @Test
+    public void testCannotUploadMoreThanUploadLength() {
+        Observable<byte[]> contentTooBig = Observable.just(new byte[101]);
+        HttpClientResponse<ByteBuf> patchResponse = post(100L).map(this::getLocation).flatMap(location -> { 
+            return patch(location, 0L, contentTooBig);
+        }).toBlocking().first();
         
+        assertThat(patchResponse.getStatus()).isEqualTo(HttpResponseStatus.BAD_REQUEST);
 
     }
 
-    private Observable<HttpClientResponse<ByteBuf>> patch(String location, Observable<byte[]> contents) {
-        return serverRule.getHttpClient().createPatch(location).setHeader("Upload-Offset", 0L)
+    private HttpClientRequest<ByteBuf, ByteBuf> post(long uploadLength) {
+    HttpClientRequest<ByteBuf, ByteBuf> post = serverRule.getHttpClient().createPost("/files")
+            .addHeader("Tus-Resumable", "1.0.0")
+            .addHeader("Upload-Length", uploadLength);
+    return post;
+}
+private Observable<HttpClientResponse<ByteBuf>> patch(String location, long offset, Observable<byte[]> contents) {
+        return serverRule.getHttpClient().createPatch(location)
+                .setHeader("Tus-Resumable", "1.0.0")
+                .setHeader("Upload-Offset", offset)
                 .writeBytesContent(contents, arr -> true);
     }
+private String getLocation(HttpClientResponse<ByteBuf> resp) {
+    return resp.getHeader("Location");
+}
 }

@@ -13,11 +13,9 @@ import rx.Observable;
 
 public class RxNettyTusRequestAdapter implements TusRequest {
     private final HttpServerRequest<ByteBuf> rxNettyRequest;
-    private final UUID uuid;
     
-    public RxNettyTusRequestAdapter( HttpServerRequest<ByteBuf> rxNettyRequest, UUID uuid) {
+    public RxNettyTusRequestAdapter( HttpServerRequest<ByteBuf> rxNettyRequest) {
         this.rxNettyRequest =  rxNettyRequest;
-        this.uuid = uuid;
     }
 
     @Override
@@ -27,7 +25,12 @@ public class RxNettyTusRequestAdapter implements TusRequest {
 
     @Override
     public UUID getUuid() {
-        return uuid;
+        String[] splitPath = rxNettyRequest.getDecodedPath().split("/");
+        try{
+            return UUID.fromString(splitPath[splitPath.length - 1]);
+        } catch (IllegalArgumentException iae) {
+            return null;
+        }
     }
 
     @Override

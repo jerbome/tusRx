@@ -1,4 +1,4 @@
-package io.thebrother.tusrx;
+package io.thebrother.tusrx.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -13,11 +13,12 @@ import org.mockito.ArgumentMatchers;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import io.thebrother.tusrx.entry.TusRequest.Method;
+import io.thebrother.tusrx.handler.PostHandler;
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
 
-public class TusRxPostTest extends TusRxTest {
+public class PostHandlerTest extends RequestHandlerTest {
 
     private final String tusResumable = "resumableHeader";
     private final long maxSize = 100L;
@@ -32,6 +33,8 @@ public class TusRxPostTest extends TusRxTest {
         when(options.getMaxSize()).thenReturn(maxSize);
         
         when(pool.newUploader(ArgumentMatchers.anyLong())).thenReturn(Observable.just(uuid));
+        
+        handler = new PostHandler(options, request, pool);
     }
 
     
@@ -43,7 +46,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize)));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -59,7 +62,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize)));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> {
@@ -75,7 +78,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize)));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
@@ -90,7 +93,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize)));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
@@ -104,7 +107,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Tus-Resumable")).thenReturn(Optional.of(tusResumable));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
@@ -119,7 +122,7 @@ public class TusRxPostTest extends TusRxTest {
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize + 1)));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.single().toBlocking().subscribe(t -> { 

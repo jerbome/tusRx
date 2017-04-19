@@ -1,4 +1,4 @@
-package io.thebrother.tusrx;
+package io.thebrother.tusrx.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -17,14 +17,15 @@ import org.slf4j.LoggerFactory;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import io.thebrother.tusrx.entry.TusRequest.Method;
+import io.thebrother.tusrx.handler.PatchHandler;
 import io.thebrother.tusrx.response.TusResponse;
 import io.thebrother.tusrx.upload.TusUpload;
 
 import rx.Observable;
 
-public class TusRxPatchTest extends TusRxTest {
+public class PatchHandlerTest extends RequestHandlerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(TusRxPatchTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(PatchHandlerTest.class);
 
     private final String tusResumable = "resumable";
     private final long maxSize = 100L;
@@ -42,6 +43,8 @@ public class TusRxPatchTest extends TusRxTest {
         when(options.getMaxSize()).thenReturn(maxSize);
 
         when(pool.getUploader(uuid)).thenReturn(Optional.of(upload));
+        
+        handler = new PatchHandler(options, request, pool);
     }
 
     @Test
@@ -54,7 +57,7 @@ public class TusRxPatchTest extends TusRxTest {
                 .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.toBlocking().subscribe(tr -> {
@@ -75,7 +78,7 @@ public class TusRxPatchTest extends TusRxTest {
                 .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.toBlocking().subscribe(tr -> {
@@ -96,7 +99,7 @@ public class TusRxPatchTest extends TusRxTest {
                 .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.toBlocking().subscribe(tr -> {
@@ -115,7 +118,7 @@ public class TusRxPatchTest extends TusRxTest {
                 .thenReturn(Observable.just(1L, 2L, 3L).concatWith(Observable.error(new IOException())));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
         response.toBlocking().subscribe();
 
         // assert
@@ -129,7 +132,7 @@ public class TusRxPatchTest extends TusRxTest {
         when(request.getHeader("Upload-Offset")).thenReturn(Optional.of("0"));
 
         // act
-        Observable<TusResponse> response = tusRx.handle(request);
+        Observable<TusResponse> response = handler.handle();
 
         // assert
         response.toBlocking().subscribe(tr -> { 

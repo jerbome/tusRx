@@ -37,7 +37,7 @@ public class RxNettyTusRequestAdapterTest {
     public void testSupportedMethods() {
         final List<Throwable> t = new ArrayList<>();
         supportedMethods.doOnNext(hm -> when(req.getHttpMethod()).thenReturn(hm))
-            .map(hm -> new RxNettyTusRequestAdapter(req, null))
+            .map(hm -> new RxNettyTusRequestAdapter(req))
             .map(TusRequest::getMethod)
             .zipWith(supportedMethods, (expected, actual) -> expected.equals(actual))
             .subscribe(b -> {}, x -> t.add(x), () -> {});

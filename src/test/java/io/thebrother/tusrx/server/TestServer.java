@@ -12,7 +12,9 @@ import io.reactivex.netty.protocol.http.server.HttpServer;
 import io.reactivex.netty.protocol.http.server.RequestHandler;
 
 import io.thebrother.tusrx.Options;
+import io.thebrother.tusrx.rxnetty.RxNettyRequestHandlerFactory;
 import io.thebrother.tusrx.rxnetty.TusRxRequestHandler;
+import io.thebrother.tusrx.upload.UploaderPool;
 
 public class TestServer {
 
@@ -21,7 +23,7 @@ public class TestServer {
     public TestServer() {
         Options options = getOptions();
         RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(
-                options);
+                options, new RxNettyRequestHandlerFactory(options, new UploaderPool(options.getRootDir())));
         server = HttpServer.newServer();
 
         CompletableFuture<Void> serverFuture = CompletableFuture.runAsync(() -> server.start(requestHandler));
@@ -61,8 +63,9 @@ public class TestServer {
     }
 
     public static void main(String args[]) {
+        Options options = getOptions();
         RequestHandler<ByteBuf, ByteBuf> requestHandler = new TusRxRequestHandler(
-                getOptions());
+                options, new RxNettyRequestHandlerFactory(options, new UploaderPool(options.getRootDir())));
         HttpServer<ByteBuf, ByteBuf> server = HttpServer.newServer(8080).start(requestHandler);
 
         server.awaitShutdown();
