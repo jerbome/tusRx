@@ -32,14 +32,15 @@ public class TusUpload {
     private final AtomicLong offset = new AtomicLong(0L);
     private final AtomicBoolean uploadInProgress = new AtomicBoolean(false);
 
-    private final Observable<Long> timer = Observable.timer(3, TimeUnit.MINUTES);
+    private final Observable<Long> timer;
     private Subscription timerSubscription;
 
-    public TusUpload(UUID uuid, Path rootDir, UploaderPool pool, long uploadLength) {
+    public TusUpload(UUID uuid, Path rootDir, UploaderPool pool, long uploadLength, Observable<Long> timer) {
         this.uuid = uuid;
         this.rootDir = rootDir;
         this.pool = pool;
         this.uploadLength = uploadLength;
+        this.timer = timer;
     }
 
     public Observable<Long> uploadChunk(TusRequest request) {
