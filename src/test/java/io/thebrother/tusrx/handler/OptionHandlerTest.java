@@ -8,10 +8,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.entry.TusRequest.Method;
-import io.thebrother.tusrx.handler.OptionHandler;
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
@@ -40,7 +37,7 @@ public class OptionHandlerTest extends RequestHandlerTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> {
-            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+            assertThat(t.getStatusCode()).isEqualTo(204);
         });
     }
 

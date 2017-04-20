@@ -14,10 +14,7 @@ import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.entry.TusRequest.Method;
-import io.thebrother.tusrx.handler.PatchHandler;
 import io.thebrother.tusrx.response.TusResponse;
 import io.thebrother.tusrx.upload.TusUpload;
 
@@ -61,7 +58,7 @@ public class PatchHandlerTest extends RequestHandlerTest {
 
         // assert
         response.toBlocking().subscribe(tr -> {
-            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+            assertThat(tr.getStatusCode()).isEqualTo(204);
             ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(tr);
             responseAssert.hasHeader("Upload-Offset", "6");
             responseAssert.hasHeader("Tus-Resumable", tusResumable);
@@ -82,7 +79,7 @@ public class PatchHandlerTest extends RequestHandlerTest {
 
         // assert
         response.toBlocking().subscribe(tr -> {
-            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.NO_CONTENT);
+            assertThat(tr.getStatusCode()).isEqualTo(204);
             ResponseHeaderAssert responseAssert = new ResponseHeaderAssert(tr);
             responseAssert.hasHeader("Upload-Offset", "16");
             responseAssert.hasHeader("Tus-Resumable", tusResumable);
@@ -103,7 +100,7 @@ public class PatchHandlerTest extends RequestHandlerTest {
 
         // assert
         response.toBlocking().subscribe(tr -> {
-            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.CONFLICT);
+            assertThat(tr.getStatusCode()).isEqualTo(409);
         }, x -> logger.info("", x));
     }
     
@@ -136,7 +133,7 @@ public class PatchHandlerTest extends RequestHandlerTest {
 
         // assert
         response.toBlocking().subscribe(tr -> { 
-            assertThat(tr.getStatus()).isEqualTo(HttpResponseStatus.NOT_FOUND);
+            assertThat(tr.getStatusCode()).isEqualTo(404);
         });
     }
 }

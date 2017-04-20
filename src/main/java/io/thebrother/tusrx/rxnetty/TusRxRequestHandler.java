@@ -31,7 +31,7 @@ public class TusRxRequestHandler implements RequestHandler<ByteBuf, ByteBuf> {
 	        return tResp.map(tr -> { 
 	            tr.getHeaders().stream()
 	            .forEach(h -> response.setHeader(h.getName(), h.getValue()));
-	            response.setStatus(tr.getStatus());
+	            response.setStatus(HttpResponseStatus.valueOf(tr.getStatusCode()));
 	            return null;
 	        });
 	    }

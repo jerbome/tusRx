@@ -1,7 +1,5 @@
 package io.thebrother.tusrx.handler;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.entry.TusRequest;
 import io.thebrother.tusrx.response.TusResponse;
@@ -17,8 +15,7 @@ public class OptionHandler extends BaseRequestHandler {
 
     @Override
     public Observable<TusResponse> handle() {
-        TusResponse response = new TusResponseImpl();
-        response.setStatus(HttpResponseStatus.NO_CONTENT);
+        TusResponse response = TusResponseImpl.noContent();
         response.setHeader("Tus-Resumable", options.getResumable());
         response.setHeader("Tus-Version", options.getVersion());
         response.setHeader("Tus-Max-Size", Long.toString(options.getMaxSize()));

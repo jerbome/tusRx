@@ -1,7 +1,5 @@
 package io.thebrother.tusrx.handler;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.entry.TusRequest;
 import io.thebrother.tusrx.response.TusResponse;
@@ -21,7 +19,6 @@ public class PostHandler extends BaseRequestHandler {
 
     @Override
     public Observable<TusResponse> handle() {
-        TusResponse response = new TusResponseImpl();
         if (isPostRequestValid(request)) {
             // TODO Optional mixed with Observable is getting harder to read.
             // Use only Observable?
@@ -31,19 +28,17 @@ public class PostHandler extends BaseRequestHandler {
                     .map(v -> {
                         return pool.newUploader(v)
                                 .map(uuid -> {
-                                    response.setStatus(HttpResponseStatus.CREATED);
+                                    TusResponse response = TusResponseImpl.created();
                                     response.setHeader("Tus-Resumable", options.getResumable());
                                     response.setHeader("Location",
                                             options.getHostUrl() + "/" + options.getBasePath() + "/" + uuid.toString());
                                     return response;
                                 });
                     }).orElseGet(() -> {
-                        response.setStatus(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
-                        return Observable.just(response);
+                        return Observable.just(TusResponseImpl.requestEntityTooLarge());
                     });
         } else {
-            response.setStatus(HttpResponseStatus.BAD_REQUEST);
-            return Observable.just(response);
+            return Observable.just(TusResponseImpl.badRequest());
         }
     }
 

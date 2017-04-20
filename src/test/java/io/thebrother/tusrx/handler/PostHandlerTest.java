@@ -10,10 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.entry.TusRequest.Method;
-import io.thebrother.tusrx.handler.PostHandler;
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
@@ -82,7 +79,7 @@ public class PostHandlerTest extends RequestHandlerTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
-            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.CREATED);
+            assertThat(t.getStatusCode()).isEqualTo(201);
         });
     }
     
@@ -97,7 +94,7 @@ public class PostHandlerTest extends RequestHandlerTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
-            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.BAD_REQUEST);
+            assertThat(t.getStatusCode()).isEqualTo(400);
         });
     }
     
@@ -111,12 +108,12 @@ public class PostHandlerTest extends RequestHandlerTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
-            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.BAD_REQUEST);
+            assertThat(t.getStatusCode()).isEqualTo(400);
         });
     }
     
     @Test
-    public void testTooLargeUploadResponds419() {
+    public void testTooLargeUploadResponds413() {
      // arrange
         when(request.getHeader("Tus-Resumable")).thenReturn(Optional.of(tusResumable));
         when(request.getHeader("Upload-Length")).thenReturn(Optional.of(Long.toString(maxSize + 1)));
@@ -126,7 +123,7 @@ public class PostHandlerTest extends RequestHandlerTest {
 
         // assert
         response.single().toBlocking().subscribe(t -> { 
-            assertThat(t.getStatus()).isEqualTo(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
+            assertThat(t.getStatusCode()).isEqualTo(413);
         });
     }
 }

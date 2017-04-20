@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.response.TusResponse;
 
 import rx.Observable;
@@ -25,6 +23,6 @@ public class NotImplementedHandlerTest extends RequestHandlerTest {
         Observable<TusResponse> response = handler.handle();
 
         // assert
-        assertThat(response.toBlocking().single().getStatus()).isEqualTo(HttpResponseStatus.NOT_IMPLEMENTED);
+        assertThat(response.toBlocking().single().getStatusCode()).isEqualTo(501);
     }
 }

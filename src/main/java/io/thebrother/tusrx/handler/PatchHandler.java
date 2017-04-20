@@ -5,8 +5,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.entry.TusRequest;
 import io.thebrother.tusrx.response.TusResponse;
@@ -47,21 +45,18 @@ public class PatchHandler extends BaseRequestHandler {
                                     })
                                     .reduce(0L, (a, b) -> a + b)
                                     .map(l -> {
-                                        TusResponse tusResponse = new TusResponseImpl();
-                                        tusResponse.setStatus(HttpResponseStatus.NO_CONTENT);
+                                        TusResponse tusResponse = TusResponseImpl.noContent();
                                         tusResponse.setHeader("Tus-Resumable", options.getResumable());
                                         tusResponse.setHeader("Upload-Offset", Long.toString(offset.addAndGet(l)));
                                         return tusResponse;
                                     })
-                                    .onErrorResumeNext(x-> Observable.just(TusResponse.BAD_REQUEST))
+                                    .onErrorResumeNext(x-> Observable.just(TusResponseImpl.badRequest()))
                                     .doAfterTerminate(() -> {});
                         } else {
-                            return Observable.just(TusResponse.CONFLICT);
+                            return Observable.just(TusResponseImpl.conflict());
                         }
-                    }).orElse(Observable.just(TusResponse.BAD_REQUEST));
-        }).orElse(Observable.just(TusResponse.NOT_FOUND));
-
-
+                    }).orElse(Observable.just(TusResponseImpl.badRequest()));
+        }).orElse(Observable.just(TusResponseImpl.notFound()));
     }
 
 }
