@@ -1,7 +1,11 @@
 package io.thebrother.tusrx.handler;
 
+import java.util.Map;
+import java.util.Optional;
+
 import io.thebrother.tusrx.Options;
 import io.thebrother.tusrx.entry.TusRequest;
+import io.thebrother.tusrx.handler.parser.UploadMetadataParser;
 import io.thebrother.tusrx.response.TusResponse;
 import io.thebrother.tusrx.response.impl.TusResponseImpl;
 import io.thebrother.tusrx.upload.UploaderPool;
@@ -22,11 +26,12 @@ public class PostHandler extends BaseRequestHandler {
         if (isPostRequestValid(request)) {
             // TODO Optional mixed with Observable is getting harder to read.
             // Use only Observable?
+            Optional<Map<String, byte[]>> uploadMetadata = request.getHeader("Upload-Metadata").map(UploadMetadataParser::parse);
             return request.getHeader("Upload-Length")
                     .map(Long::parseLong)
                     .filter(v -> v <= options.getMaxSize())
                     .map(v -> {
-                        return pool.newUploader(v)
+                        return pool.newUploader(v, uploadMetadata)
                                 .map(uuid -> {
                                     TusResponse response = TusResponseImpl.created();
                                     response.setHeader("Tus-Resumable", options.getResumable());

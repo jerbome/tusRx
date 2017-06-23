@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -32,7 +33,7 @@ public class UploaderPoolTest {
         // arrange
 
         // act
-        UUID newUploader = pool.newUploader(50L).toBlocking().first();
+        UUID newUploader = pool.newUploader(50L, Optional.empty()).toBlocking().first();
 
         // assert
         assertThat(pool.getUploader(newUploader)).isPresent();
@@ -43,7 +44,7 @@ public class UploaderPoolTest {
         // arrange
 
         // act
-        UUID newUploader = pool.newUploader(50L).toBlocking().first();
+        UUID newUploader = pool.newUploader(50L, Optional.empty()).toBlocking().first();
 
         // assert
         assertThat(pool.getUploader(newUploader)).map(TusUpload::getUploadLength)
@@ -53,7 +54,7 @@ public class UploaderPoolTest {
     @Test
     public void testuploadIsRemovedWhenCallingRemove() {
         // arrange
-        UUID newUploader = pool.newUploader(50L).toBlocking().first();
+        UUID newUploader = pool.newUploader(50L, Optional.empty()).toBlocking().first();
 
         // act
         pool.remove(newUploader);

@@ -17,7 +17,7 @@ public class UploaderPool {
         this.rootDir = rootDir;
     }
 
-    public Observable<UUID> newUploader(long uploadLength) {
+    public Observable<UUID> newUploader(long uploadLength, Optional<Map<String,byte[]>> uploadMetadata) {
         UUID uuid = UUID.randomUUID();
         
         TusUpload upload = new TusUpload(uuid, rootDir, this, uploadLength, Observable.timer(3, TimeUnit.MINUTES));

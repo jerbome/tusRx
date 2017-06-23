@@ -29,7 +29,7 @@ public class PostHandlerTest extends RequestHandlerTest {
         when(options.getResumable()).thenReturn(tusResumable );
         when(options.getMaxSize()).thenReturn(maxSize);
         
-        when(pool.newUploader(ArgumentMatchers.anyLong())).thenReturn(Observable.just(uuid));
+        when(pool.newUploader(ArgumentMatchers.anyLong(), ArgumentMatchers.any())).thenReturn(Observable.just(uuid));
         
         handler = new PostHandler(options, request, pool);
     }
