@@ -11,11 +11,7 @@ addons:
 
 before_cache:
   - rm -rf $HOME/.gradle/*
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-
+cache: false
 
 after_success:
   - ./gradlew jacocoTestReport
